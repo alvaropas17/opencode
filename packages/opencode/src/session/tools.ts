@@ -12,6 +12,7 @@ import { Truncate } from "@/tool/truncate"
 
 import { Plugin } from "@/plugin"
 import type { TaskPromptOps } from "@/tool/task"
+import type { ToolPermissionRequest } from "@opencode-ai/plugin"
 import { type Tool as AITool, tool, jsonSchema, type ToolExecutionOptions, asSchema } from "ai"
 import { Effect } from "effect"
 import { MessageV2 } from "./message-v2"
@@ -103,11 +104,27 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
         return run.promise(
           Effect.gen(function* () {
             const ctx = context(args, options)
-            yield* plugin.trigger(
+            const before = yield* plugin.trigger(
               "tool.execute.before",
               { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID },
-              { args },
+              { args, permission: undefined as ToolPermissionRequest | undefined },
             )
+            if (before.permission) {
+              // Confirmación forzada: un ruleset vacío hace que Permission.ask
+              // siempre publique `permission.asked`, saltándose el `"*": "allow"`
+              // por defecto. `Effect.orDie` aborta el tool si el usuario rechaza.
+              yield* permission
+                .ask({
+                  permission: before.permission.permission,
+                  patterns: before.permission.patterns,
+                  always: before.permission.always ?? [],
+                  metadata: before.permission.metadata ?? {},
+                  sessionID: ctx.sessionID,
+                  tool: { messageID: input.processor.message.id, callID: options.toolCallId },
+                  ruleset: [],
+                })
+                .pipe(Effect.orDie)
+            }
             const result = yield* item.execute(args, ctx)
             const output = {
               ...result,

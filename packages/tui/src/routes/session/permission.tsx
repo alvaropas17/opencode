@@ -369,6 +369,27 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
               }
             }
 
+            if (permission === "preflight") {
+              const meta = props.request.metadata ?? {}
+              const report = typeof meta.report === "string" ? meta.report : ""
+              const command = typeof meta.command === "string" ? meta.command : ""
+              const verdict = typeof meta.verdict === "string" ? meta.verdict : ""
+              return {
+                icon: "⚠",
+                title: verdict ? `Destructive command (${verdict})` : "Destructive command",
+                body: (
+                  <box flexDirection="column" gap={1} paddingLeft={1}>
+                    <Show when={command}>
+                      <text fg={theme.text}>{command}</text>
+                    </Show>
+                    <Show when={report}>
+                      <text fg={theme.textMuted}>{report}</text>
+                    </Show>
+                  </box>
+                ),
+              }
+            }
+
             return {
               icon: "⚙",
               title: `Call tool ${permission}`,
@@ -397,12 +418,17 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
             </box>
           )
 
+          const options: Record<string, string> =
+            props.request.permission === "preflight"
+              ? { once: "Execute", reject: "Abort" }
+              : { once: "Allow once", always: "Allow always", reject: "Reject" }
+
           const body = (
             <Prompt
               title="Permission required"
               header={header()}
               body={current.body}
-              options={{ once: "Allow once", always: "Allow always", reject: "Reject" }}
+              options={options}
               escapeKey="reject"
               fullscreen
               onSelect={(option) => {

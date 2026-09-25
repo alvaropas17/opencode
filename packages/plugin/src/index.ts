@@ -219,6 +219,13 @@ export type ProviderHook = {
 /** @deprecated Use AuthOAuthResult instead. */
 export type AuthOuathResult = AuthOAuthResult
 
+export type ToolPermissionRequest = {
+  permission: string
+  patterns: string[]
+  always?: string[]
+  metadata?: Record<string, unknown>
+}
+
 export interface Hooks {
   dispose?: () => Promise<void>
   event?: (input: { event: Event }) => Promise<void>
@@ -265,7 +272,7 @@ export interface Hooks {
   ) => Promise<void>
   "tool.execute.before"?: (
     input: { tool: string; sessionID: string; callID: string },
-    output: { args: any },
+    output: { args: any; permission?: ToolPermissionRequest },
   ) => Promise<void>
   "shell.env"?: (
     input: { cwd: string; sessionID?: string; callID?: string },
