@@ -159,3 +159,9 @@ const table = sqliteTable("session", {
 - Keep delivery vocabulary explicit. Prompts steer by default and promote at the next safe provider-turn boundary while the current drain requires continuation. An explicit `queue` input remains pending until the Session would otherwise become idle; promote one queued input at that boundary, then reevaluate continuation before promoting another. Promoting any new user input resets the selected agent's provider-turn allowance; a batch of steers resets it once.
 - Keep EventV2 replay owner claims separate from clustered Session execution ownership.
 - Keep the System Context algebra, registry, and built-ins in `src/system-context`; keep Context Source producers with their observed domains, and keep Session History selection plus Context Epoch persistence Session-owned.
+
+## Fork version note
+
+This fork (`alvaropas17/opencode`, branch `preflight-permission`) reports version `1.18.32` and builds a `0.0.0-preflight-permission-<stamp>` binary — the opencode **v1** lineage. The prebuilt `@opencode/cli` distributed from npm reports `2.0.18` — the **v2** line. They are different codebases; check `opencode --version` before assuming behavior, config compatibility, or where a fix belongs.
+
+The local `opencode` command runs `%USERPROFILE%\opencode-custom\opencode-custom.exe`, built from this repo via `build-custom.ps1`.
