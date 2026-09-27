@@ -14,6 +14,7 @@ import { writeHeapSnapshot } from "v8"
 import { ServerAuth } from "@/server/auth"
 import { validateSession } from "../tui/validate-session"
 import { win32InstallCtrlCGuard } from "@opencode-ai/tui/terminal-win32"
+import { restoreTerminalModes } from "@opencode-ai/tui/util/renderer"
 
 declare global {
   const OPENCODE_WORKER_PATH: string
@@ -301,6 +302,12 @@ export const TuiThreadCommand = cmd({
     } finally {
       try {
         unguard?.()
+      } catch {}
+      // Safety net: if the TUI exited without restoring the terminal (crash,
+      // hard interrupt), re-disable mouse tracking so the shell prompt does not
+      // receive raw SGR mouse reports as text input.
+      try {
+        restoreTerminalModes()
       } catch {}
     }
     process.exit()
