@@ -40,9 +40,24 @@ export const Input = Schema.Struct({
 export const Output = Schema.Array(FileSystem.Match)
 type EncodedOutput = typeof Output.Encoded
 
+/** Experimental opt-in byte budget for grep's model content. Unset keeps the exact baseline output. */
+export const OUTPUT_BUDGET_ENV = "OPENCODE_GREP_OUTPUT_MAX_BYTES"
+
+export const outputBudgetBytes = () => {
+  const raw = process.env[OUTPUT_BUDGET_ENV]
+  if (raw === undefined || raw.trim() === "") return undefined
+  const value = Number(raw)
+  return Number.isSafeInteger(value) && value > 0 ? value : undefined
+}
+
 /** Format raw search matches into concise model content. */
-export const toModelContent = (matches: EncodedOutput, truncated = false) => {
-  const lines = matches.length === 0 ? ["No matches found"] : [`Found ${matches.length} matches`]
+export const toModelContent = (matches: EncodedOutput, truncated = false, total?: number) => {
+  const partial = total !== undefined && total !== matches.length
+  const lines = partial
+    ? [`Found ${matches.length} of ${total} matches`]
+    : matches.length === 0
+      ? ["No matches found"]
+      : [`Found ${matches.length} matches`]
   let current = ""
   for (const match of matches) {
     if (current !== match.entry.path) {
@@ -55,9 +70,30 @@ export const toModelContent = (matches: EncodedOutput, truncated = false) => {
   if (truncated)
     lines.push(
       "",
-      `(Results are truncated: showing first ${matches.length} results. Consider using a more specific path or pattern.)`,
+      partial
+        ? `(Results are truncated: showing first ${matches.length} of ${total} results. Consider refining the pattern, path, or include filter.)`
+        : `(Results are truncated: showing first ${matches.length} results. Consider using a more specific path or pattern.)`,
     )
   return lines.join("\n")
+}
+
+/**
+ * Selects the longest prefix of complete matches whose rendered content fits the UTF-8 budget.
+ * Lines are never cut and order is preserved. Without a budget (or when everything fits) the
+ * baseline rendering is returned unchanged. A notice is always emitted when matches are omitted.
+ * A positive budget smaller than the truthful minimal notice is treated as not enabled (baseline),
+ * since no bounded rendering could stay within it without hiding the truncation.
+ */
+export const boundModelContent = (matches: EncodedOutput, truncated: boolean, budget: number | undefined) => {
+  const baseline = toModelContent(matches, truncated)
+  const minimum = Buffer.byteLength(toModelContent([], true, matches.length), "utf-8")
+  if (budget === undefined || budget < minimum || Buffer.byteLength(baseline, "utf-8") <= budget)
+    return { content: baseline, shown: matches.length, truncated }
+  for (let shown = matches.length - 1; shown >= 0; shown--) {
+    const content = toModelContent(matches.slice(0, shown), true, matches.length)
+    if (Buffer.byteLength(content, "utf-8") <= budget) return { content, shown, truncated: true }
+  }
+  return { content: toModelContent([], true, matches.length), shown: 0, truncated: true }
 }
 
 /** Grep leaf that defaults its filesystem root to the active Location. */
@@ -144,17 +180,22 @@ export const Plugin = {
                 )
               return { matches: matches.slice(0, limit), truncated: matches.length > limit }
             }).pipe(
-              Effect.map((result) => ({
-                output: result.matches,
-                content: toModelContent(
+              Effect.map((result) => {
+                const bounded = boundModelContent(
                   result.matches.map((match) => ({
                     ...match,
                     entry: { ...match.entry, path: path.resolve(location.directory, match.entry.path) },
                   })),
                   result.truncated,
-                ),
-                metadata: { matches: result.matches.length, truncated: result.truncated },
-              })),
+                  outputBudgetBytes(),
+                )
+                return {
+                  output:
+                    bounded.shown === result.matches.length ? result.matches : result.matches.slice(0, bounded.shown),
+                  content: bounded.content,
+                  metadata: { matches: bounded.shown, truncated: bounded.truncated },
+                }
+              }),
               Effect.mapError((error) =>
                 error instanceof ToolFailure
                   ? error
