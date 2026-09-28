@@ -5,6 +5,7 @@ import { Context, Effect, Layer, Option, Ref, Schema } from "effect"
 import { makeLocationNode } from "@opencode/util/effect/app-node"
 import { Bus } from "../bus.js"
 import { FSUtil } from "@opencode/util/fs-util"
+import { InstructionDiscovery } from "../instruction-discovery.js"
 import { Location } from "../location.js"
 import { SessionEvent } from "./event.js"
 import { MessageDecodeError } from "./error.js"
@@ -32,6 +33,7 @@ const layer = Layer.effect(
     const fs = yield* FSUtil.Service
     const store = yield* SessionStore.Service
     const location = yield* Location.Service
+    const discovery = yield* InstructionDiscovery.Service
     // Resolved once for the Location layer; the synthetic text and dedup ledger keep
     // absolute paths, but the human-facing description shows paths relative to the project
     // root so opening a subdirectory still describes paths from the project root.
@@ -40,7 +42,10 @@ const layer = Layer.effect(
     // Session/path pair while a load is in flight. The claim is released once the load
     // settles: the synthetic message metadata scanned below is the only lasting ledger,
     // so paths whose synthetics drop out of model-visible history (compaction, revert)
-    // are re-discovered and re-injected instead of staying silently lost.
+    // are re-discovered and re-injected instead of staying silently lost. Paths the active
+    // InstructionDiscovery already renders are excluded from that synthetic path below:
+    // discovery owns their value and epoch, so it re-renders them after compaction and a
+    // second synthetic copy would double them.
     const inFlight = yield* Ref.make<Map<SessionSchema.ID, Set<string>>>(new Map())
 
     const load = Effect.fn("SessionInstructions.load")(function* (input: Parameters<Interface["load"]>[0]) {
@@ -55,7 +60,13 @@ const layer = Layer.effect(
       if (claimed.length === 0) return
       yield* Effect.gen(function* () {
         const alreadyInjected = yield* previouslyInjected(store, input.sessionID)
-        const toInject = claimed.filter((path) => !alreadyInjected.has(path))
+        // Discovery already supplies the global and ancestor AGENTS.md it observed; the read
+        // hook walks those same ancestors independently, so injecting them here would add a
+        // duplicate synthetic next to the discovered instruction value. Files discovery never
+        // listed (deeper project AGENTS.md) remain synthetic-managed and still re-inject.
+        const active = yield* discovery.list()
+        const discovered = new Set<string>(Array.isArray(active) ? active.map((file) => file.path) : [])
+        const toInject = claimed.filter((path) => !alreadyInjected.has(path) && !discovered.has(path))
         if (toInject.length === 0) return
         const files = yield* Effect.forEach(
           toInject,
@@ -121,5 +132,5 @@ function describePath(root: string, path: string) {
 export const node = makeLocationNode({
   name: "session-instructions",
   layer,
-  deps: [Bus.node, FSUtil.node, Location.node, SessionStore.node],
+  deps: [Bus.node, FSUtil.node, InstructionDiscovery.node, Location.node, SessionStore.node],
 })

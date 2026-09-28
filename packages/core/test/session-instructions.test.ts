@@ -11,7 +11,9 @@ import { Bus } from "@opencode/core/bus"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
 import { Image } from "@opencode/core/image"
+import { InstructionDiscovery } from "@opencode/core/instruction-discovery"
 import { Location } from "@opencode/core/location"
+import { AbsolutePath } from "@opencode/core/schema"
 import { FileAccess } from "@opencode/core/file-access"
 import { Model } from "@opencode/core/model"
 import { Permission } from "@opencode/core/permission"
@@ -70,6 +72,7 @@ const testLayer = AppNodeBuilder.build(
     Tool.node,
     PluginHooks.node,
     SessionInstructions.node,
+    InstructionDiscovery.node,
     Global.node,
     Image.node,
   ]),
@@ -192,6 +195,48 @@ describe("SessionInstructions", () => {
 
       // The durable claim on the prior synthetic prevents re-injection; no new synthetic.
       expect(yield* synthetics(sessionID)).toHaveLength(1)
+    }),
+  )
+
+  it.live("does not synthesize AGENTS.md already rendered by active instruction discovery", () =>
+    Effect.gen(function* () {
+      const location = yield* Location.Service
+      const dir = location.directory
+      const subPath = path.resolve(dir, "sub", "AGENTS.md")
+      const deepPath = path.resolve(dir, "sub", "deep", "AGENTS.md")
+      yield* mkdir(path.dirname(deepPath))
+      yield* writeAgents(subPath, "sub-instructions")
+      yield* writeAgents(deepPath, "deep-instructions")
+      yield* Effect.promise(() => fs.writeFile(path.resolve(dir, "sub", "file.txt"), "sub file"))
+      yield* Effect.promise(() => fs.writeFile(path.resolve(dir, "sub", "deep", "file.txt"), "deep file"))
+
+      // An active ambient source owns sub/AGENTS.md, the way the config plugin publishes the
+      // global file or an upward project file. The read hook walks the same ancestors, so it
+      // must not emit a second synthetic copy of a value discovery already renders.
+      const discovery = yield* InstructionDiscovery.Service
+      yield* discovery.transform((editor) =>
+        editor.add(new InstructionDiscovery.File({ path: AbsolutePath.make(subPath), content: "sub-instructions" })),
+      )
+      const listed = yield* discovery.list()
+      expect(Array.isArray(listed) ? listed.map((file) => file.path) : []).toEqual([AbsolutePath.make(subPath)])
+
+      const session = yield* Session.Service
+      const registry = yield* Tool.Service
+      const sessionID = (yield* session.create({ location: Location.Ref.make({ directory: dir }) })).id
+
+      // Reading under sub/ would discover sub/AGENTS.md, but discovery already owns it: no
+      // synthetic is published, unlike before this dedup existed.
+      yield* executeTool(registry, readCall(sessionID, "call-sub", "sub/file.txt"))
+      expect(yield* synthetics(sessionID)).toHaveLength(0)
+
+      // A deeper AGENTS.md that discovery never listed is still synthesized, so the model sees
+      // it; sub's discovery-managed file stays excluded from the same walk.
+      yield* executeTool(registry, readCall(sessionID, "call-deep", "sub/deep/file.txt"))
+      const injected = yield* synthetics(sessionID)
+      expect(injected).toHaveLength(1)
+      expect(injected[0]!.text).toBe(`Instructions from: ${deepPath}\ndeep-instructions`)
+      expect(injected[0]!.metadata).toEqual({ instruction: { paths: [deepPath] } })
+      expect(injected[0]!.text).not.toContain("sub-instructions")
     }),
   )
 
