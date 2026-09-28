@@ -10,6 +10,7 @@ import type {
   Namespace as ToolNamespace,
   Result,
 } from "@opencode/schema/tool"
+import { Hash } from "@opencode/util/hash"
 import { Effect, Ref, Schema, Semaphore } from "effect"
 import { definition, normalizedName } from "../tool/runtime.js"
 import { CodeModeCatalog } from "./catalog.js"
@@ -82,6 +83,7 @@ export const create = (
         const callIndex = yield* Ref.make(0)
         const files = yield* Ref.make<Array<CollectedFiles>>([])
         const calls = yield* Ref.make<Array<ExecuteCall>>([])
+        const fetchNotFound = yield* Ref.make(0)
         const lock = Semaphore.makeUnsafe(1)
         const record = (update: (items: Array<ExecuteCall>) => Array<ExecuteCall>) =>
           lock.withPermit(
@@ -104,13 +106,13 @@ export const create = (
               const text = content.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n")
               return text === "" ? null : text
             }),
-          progressHooks(record),
+          progressHooks(record, context.sessionID, fetchNotFound),
         ).execute(code)
         const toolCalls = yield* Ref.get(calls)
         const collected = (yield* Ref.get(files))
           .toSorted((left, right) => left.index - right.index)
           .flatMap((item) => item.files)
-        const output = formatResult(result)
+        const output = withFetchWarning(formatResult(result), yield* Ref.get(fetchNotFound))
         const value: typeof ExecuteOutput.Type = {
           output,
           toolCalls,
@@ -140,7 +142,11 @@ export const create = (
 }
 
 // Rows appear in start order; the same call object arrives at both hooks, so a call finds its row again.
-function progressHooks(record: (update: (items: Array<ExecuteCall>) => Array<ExecuteCall>) => Effect.Effect<unknown>) {
+function progressHooks(
+  record: (update: (items: Array<ExecuteCall>) => Array<ExecuteCall>) => Effect.Effect<unknown>,
+  sessionID: Context["sessionID"],
+  fetchNotFound: Ref.Ref<number>,
+) {
   const rows = new WeakMap<object, number>()
   const start = (call: object, entry: ExecuteCall) =>
     record((items) => {
@@ -171,8 +177,67 @@ function progressHooks(record: (update: (items: Array<ExecuteCall>) => Array<Exe
           return Effect.void
       }
     },
-    "extension.after": settle,
+    "extension.after": (call, result) => {
+      const measurement = fetchNotFoundMeasurement(call, result, sessionID)
+      const settled = settle(call, result)
+      if (measurement === undefined) return settled
+      // The host records a bounded 404 measurement per session; the response itself is untouched.
+      return settled.pipe(
+        Effect.andThen(Ref.update(fetchNotFound, (count) => count + 1)),
+        Effect.andThen(Effect.logInfo(FETCH_MEASUREMENT_MESSAGE, measurement)),
+      )
+    },
   } satisfies CodeMode.Hooks
+}
+
+const FETCH_MEASUREMENT_MESSAGE = "fetch 404"
+const FETCH_WARNING_PREFIX = "fetch 404 warning:"
+
+type FetchMeasurement = {
+  readonly session: Context["sessionID"]
+  readonly method: string
+  readonly origin: string
+  readonly status: number
+  // A digest of origin plus pathname; the raw path, query, and hash never reach the log.
+  readonly path: string
+}
+
+function fetchNotFoundMeasurement(
+  call: CodeMode.ExtensionInvocation,
+  result: CodeMode.CallResult,
+  sessionID: Context["sessionID"],
+): FetchMeasurement | undefined {
+  if (call.extension !== "web" || call.name !== "fetch" || result.status !== "success") return
+  const response = fetchResponse(result.value)
+  if (response === undefined || response.status !== 404 || !URL.canParse(response.url)) return
+  const url = new URL(response.url)
+  return {
+    session: sessionID,
+    method: fetchMethod(call.args),
+    origin: url.origin,
+    status: response.status,
+    path: Hash.sha256(`${url.origin}${url.pathname}`).slice(0, 16),
+  }
+}
+
+function fetchResponse(value: unknown): { readonly status: number; readonly url: string } | undefined {
+  if (typeof value !== "object" || value === null) return
+  const response = value as { readonly status?: unknown; readonly url?: unknown }
+  if (typeof response.status !== "number" || typeof response.url !== "string") return
+  return { status: response.status, url: response.url }
+}
+
+function fetchMethod(args: ReadonlyArray<unknown>): string {
+  const init = args[1]
+  const method = typeof init === "object" && init !== null ? (init as { readonly method?: unknown }).method : undefined
+  return typeof method === "string" ? method.toUpperCase() : "GET"
+}
+
+// Append-only guidance keeps earlier cached text intact and never rewrites the fetch result.
+function withFetchWarning(output: string, count: number) {
+  if (count === 0) return output
+  const warning = `${FETCH_WARNING_PREFIX} ${count} ${count === 1 ? "request" : "requests"} returned HTTP 404. Verify the URL against a real index, a web search, or the provider API before retrying; do not retry guessed URL variants.`
+  return output === "" ? warning : `${output}\n\n${warning}`
 }
 
 export const catalog = (inventory: Inventory) => {
