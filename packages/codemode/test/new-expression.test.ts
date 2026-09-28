@@ -75,8 +75,7 @@ describe("new on a non-constructible callee", () => {
     const failure = await error(`class A {}; return new A()`)
     expect(failure.kind).toBe("UnsupportedSyntax")
     expect(failure.message).toStartWith(
-      "SyntaxError: Syntax 'ClassDeclaration' is not supported. This is a restricted JavaScript-like language. Supported: ",
+      "SyntaxError: Syntax 'ClassDeclaration' is not supported. Use plain functions",
     )
-    expect(failure.message).toContain("Unsupported: classes, getters/setters, BigInt, and custom Symbols.")
   })
 })

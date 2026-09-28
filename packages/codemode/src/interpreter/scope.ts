@@ -1,6 +1,21 @@
 import { type AstNode, type Binding, referenceError, typeError } from "./model.js"
 import type { Value } from "./objects.js"
 
+// Node/module globals a model reaches for out of habit. Name the missing capability rather than a bare
+// unknown-identifier error, and point every unknown identifier at the tool path it may have meant.
+const moduleGlobals = new Set(["require", "module", "exports", "__dirname", "__filename"])
+
+const unknownIdentifier = (name: string, node: AstNode) =>
+  moduleGlobals.has(name)
+    ? referenceError(
+        `'${name}' is not available: there are no modules here. Return a value from the program, and use the provided tools for external operations.`,
+        node,
+      )
+    : referenceError(
+        `Unknown identifier '${name}'. To call a tool, reference it as 'tools.<namespace>.<tool>'.`,
+        node,
+      )
+
 export class ScopeStack {
   private readonly scopes: Array<Map<string, Binding>>
 
@@ -37,7 +52,7 @@ export class ScopeStack {
     const binding = this.resolve(name)
 
     if (!binding) {
-      throw referenceError(`Unknown identifier '${name}'.`, node)
+      throw unknownIdentifier(name, node)
     }
 
     if (binding.initialized === false) {
@@ -51,7 +66,7 @@ export class ScopeStack {
     const binding = this.resolve(name)
 
     if (!binding) {
-      throw referenceError(`Unknown identifier '${name}'.`, node)
+      throw unknownIdentifier(name, node)
     }
 
     if (binding.initialized === false) {

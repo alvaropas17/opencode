@@ -637,7 +637,11 @@ Nothing is exposed unless a host provides it; extension calls are not tool calls
       tool-call-limit failures; parse/compile failures, cooperative timeout, and output bounding remain outside program
       `catch`.
 - [x] Source locations on unsupported-syntax diagnostics. The diagnostic names the rejected node type and attaches a
-      short orientation to the supported subset; this matrix is the full reference.
+      short orientation to the supported subset; this matrix is the full reference. Familiar constructs instead get
+      the fix rather than the list: a dynamic `import(...)` (the one module form that parses in script mode) reports
+      the missing modules and filesystem, and classes report the plain-function/object replacement. Object accessors
+      and the Node module globals (`require`, `module`, `exports`) name the missing capability, and an unresolved
+      identifier points at the `tools.<namespace>.<tool>` call path it may have meant.
 - [x] Model-visible host failure messages and underlying causes, including output-validation errors.
 - [x] Caught errors do not distinguish user throws, interpreter failures, and tool failures; a program sees one
       Error-shaped value in `catch`, rejection handlers, and `Promise.allSettled` reasons. It always has `name` and

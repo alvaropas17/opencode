@@ -2044,7 +2044,11 @@ class Frame<R> {
         }
 
         if (property.kind !== "init") {
-          throw typeError("Only init object properties are supported.", property)
+          const accessor = property.kind === "get" ? "Getters" : "Setters"
+          throw typeError(
+            `${accessor} are not supported; use a plain data property or a function property instead.`,
+            property,
+          )
         }
 
         const keyNode = property.key

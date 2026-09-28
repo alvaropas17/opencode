@@ -74,14 +74,32 @@ export const uriError = failure("URIError")
 export const supportedSyntaxMessage =
   "This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead."
 
-export const unsupportedSyntax = (kind: string, node: AstNode): PendingThrow =>
-  new PendingThrow(
+// Dynamic `import()` is the one module form that parses in script mode, and it usually signals a
+// module or filesystem intent the interpreter cannot serve: name the missing capability, not the syntax.
+export const importSyntaxMessage =
+  "There are no modules and no filesystem here: `import(...)` cannot load a module or read a file. Use the provided tools for external operations and to read files."
+
+// Classes are rejected as syntax; point at the plain-function/object replacement rather than the generic list.
+export const classSyntaxMessage = "Use plain functions, object literals, and closures instead."
+
+// Familiar node types a model reaches for out of habit. Each gets the fix that unblocks the next attempt
+// instead of the generic subset orientation, which reads as a list to memorise rather than an action to take.
+const specificSyntaxMessages: Readonly<Record<string, string>> = {
+  ImportExpression: importSyntaxMessage,
+  ClassDeclaration: classSyntaxMessage,
+  ClassExpression: classSyntaxMessage,
+}
+
+export const unsupportedSyntax = (kind: string, node: AstNode): PendingThrow => {
+  const message = specificSyntaxMessages[kind] ?? supportedSyntaxMessage
+  return new PendingThrow(
     "SyntaxError",
-    `Syntax '${kind}' is not supported. ${supportedSyntaxMessage}`,
+    `Syntax '${kind}' is not supported. ${message}`,
     node,
     "UnsupportedSyntax",
-    [supportedSyntaxMessage],
+    [message],
   )
+}
 
 // Acorn lines are 1-based and its columns are 0-based. Diagnostics use 1-based columns of the submitted source.
 export const sourceLocation = (node: AstNode): { readonly line: number; readonly column: number } => ({
