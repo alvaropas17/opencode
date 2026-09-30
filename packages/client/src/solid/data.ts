@@ -622,6 +622,7 @@ export function createData(config: CreateDataInput) {
             }),
         )
         refresh(() => result.location.vcs.sync())
+        refresh(() => result.location.agent.sync())
         refresh(() => result.project.sync())
         return
       }

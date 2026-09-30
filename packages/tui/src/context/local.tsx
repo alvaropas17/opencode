@@ -64,6 +64,30 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         current: undefined as string | undefined,
         draftBySession: {} as Record<string, { agent?: string } | undefined>,
       })
+      const agentPath = path.join(paths.state, "agent.json")
+      const agentPersistence = { ready: false, pending: false, touched: false }
+
+      function saveAgent() {
+        if (!agentPersistence.ready) {
+          agentPersistence.pending = true
+          return
+        }
+        agentPersistence.pending = false
+        void writeJsonAtomic(agentPath, { current: agentStore.current })
+      }
+
+      readJson<unknown>(agentPath)
+        .then((value) => {
+          if (agentPersistence.touched) return
+          if (!value || typeof value !== "object") return
+          const current = (value as Record<string, unknown>).current
+          if (typeof current === "string") setAgentStore("current", current)
+        })
+        .catch(() => {})
+        .finally(() => {
+          agentPersistence.ready = true
+          if (agentPersistence.pending) saveAgent()
+        })
       onCleanup(event.on("session.deleted", (evt) => setAgentStore("draftBySession", evt.data.sessionID, undefined)))
       onCleanup(
         event.on("session.agent.selected", (evt) => {
@@ -110,6 +134,8 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             const selected = changed && route.data.type === "session" ? model.current() : undefined
             if (selected) model.set(selected)
           })
+          agentPersistence.touched = true
+          saveAgent()
         },
         move(direction: 1 | -1) {
           batch(() => {
