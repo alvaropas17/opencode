@@ -67,6 +67,7 @@ const description = [
   'Call tools through `tools` using only exact paths and signatures from the catalog. Do not infer or normalize tool names; preserve bracket notation such as `tools.<namespace>["tool-name"](input)`.',
   "Prefer an explicit `return`; if omitted, the final top-level expression becomes the result.",
   "Await every call whose completion matters; pending calls are interrupted when execution ends. Run independent calls concurrently with `Promise.all`.",
+  "Keep intermediate tool results inside the program. Return only the requested summary and evidence; large returned text is saved to a file with a bounded preview.",
 ].join("\n")
 
 export const create = (

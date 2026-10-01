@@ -1,0 +1,344 @@
+{
+  "generatedAt": "2026-09-30T08:39:23.105Z",
+  "platform": "win32",
+  "runtimes": {
+    "bun": "1.3.14"
+  },
+  "repetitions": 15,
+  "warmups": 2,
+  "scope": "isolated microbench: Tool.Snapshot.execute for read/shell plus isolated truncate/history/conversion. NOT the SessionRunner tool-call path; see perf-stages-runner.results.json for that.",
+  "limitations": [
+    "No SessionRunner involvement: this does not measure durable Tool.Success publication/projection per tool call nor next-request reload.",
+    "bus.persist here is the isolated publish of SessionEvent.Viewed; shell tool events are ephemeral, so no durable tool event is captured inline.",
+    "permission for read/shell uses the real Permission service with allow rules; the runner harness mocks it.",
+    "history.entries/conversion use a seeded 40-message text-only history with empty instructions; lower bound for rich histories.",
+    "Stages below ~10us are close to the clock noise floor."
+  ],
+  "target": {
+    "read": "perf-probe.txt (60 lines)",
+    "shell": "Write-Output ok"
+  },
+  "output": {
+    "read": {
+      "total": {
+        "n": 15,
+        "median": 2.1161999999999352,
+        "min": 1.6023000000000138,
+        "max": 5.469200000000001
+      },
+      "snapshot": {
+        "n": 15,
+        "median": 0.49270000000024083,
+        "min": 0.34009999999989304,
+        "max": 0.6342999999999392
+      },
+      "stages": {
+        "dispatch": {
+          "n": 15,
+          "median": 0.003200000000106229,
+          "min": 0.002300000000104774,
+          "max": 0.009000000000014552,
+          "present": 15,
+          "spans": 15
+        },
+        "hook.before": {
+          "n": 15,
+          "median": 0.0039000000001578883,
+          "min": 0.0022999999996500264,
+          "max": 0.005799999999908323,
+          "present": 15,
+          "spans": 15
+        },
+        "lookup": {
+          "n": 15,
+          "median": 0.00040000000035433914,
+          "min": 0.0003000000001520675,
+          "max": 0.0016999999998006388,
+          "present": 15,
+          "spans": 15
+        },
+        "validate": {
+          "n": 15,
+          "median": 0.031899999999950523,
+          "min": 0.024600000000191358,
+          "max": 0.05199999999967986,
+          "present": 15,
+          "spans": 15
+        },
+        "permission": {
+          "n": 15,
+          "median": 0.576799999999821,
+          "min": 0.4054000000000997,
+          "max": 0.7376999999999043,
+          "present": 15,
+          "spans": 15
+        },
+        "leaf": {
+          "n": 15,
+          "median": 1.9774999999999636,
+          "min": 1.4974999999999454,
+          "max": 5.322299999999814,
+          "present": 15,
+          "spans": 15
+        },
+        "capture": {
+          "n": 15,
+          "median": 0.021300000000337604,
+          "min": 0.014100000000325963,
+          "max": 0.04309999999986758,
+          "present": 15,
+          "spans": 15
+        },
+        "hook.after": {
+          "n": 15,
+          "median": 0.003100000000131331,
+          "min": 0.002100000000154978,
+          "max": 0.02359999999998763,
+          "present": 15,
+          "spans": 15
+        },
+        "images": {
+          "n": 15,
+          "median": 0.009499999999889042,
+          "min": 0.0072000000000116415,
+          "max": 0.022699999999986176,
+          "present": 15,
+          "spans": 15
+        }
+      },
+      "okCount": 15,
+      "totals": [
+        2.19,
+        5,
+        1.784,
+        2.124,
+        1.866,
+        2.288,
+        1.992,
+        5.469,
+        1.849,
+        2.157,
+        1.602,
+        2.404,
+        1.865,
+        2.116,
+        1.857
+      ]
+    },
+    "shell": {
+      "total": {
+        "n": 15,
+        "median": 166.72820000000002,
+        "min": 160.6815999999999,
+        "max": 170.45399999999972
+      },
+      "snapshot": {
+        "n": 15,
+        "median": 0.4900000000000091,
+        "min": 0.3364000000001397,
+        "max": 0.751299999999901
+      },
+      "stages": {
+        "dispatch": {
+          "n": 15,
+          "median": 0.0028999999999541615,
+          "min": 0.0018999999997504347,
+          "max": 0.005500000000211003,
+          "present": 15,
+          "spans": 15
+        },
+        "hook.before": {
+          "n": 15,
+          "median": 0.0036000000000058208,
+          "min": 0.0027000000000043656,
+          "max": 0.009699999999838838,
+          "present": 15,
+          "spans": 15
+        },
+        "lookup": {
+          "n": 15,
+          "median": 0.00040000000035433914,
+          "min": 0.00029999999969732016,
+          "max": 0.0007999999997991836,
+          "present": 15,
+          "spans": 15
+        },
+        "validate": {
+          "n": 15,
+          "median": 0.034500000000207365,
+          "min": 0.024100000000089494,
+          "max": 0.08569999999963329,
+          "present": 15,
+          "spans": 15
+        },
+        "permission": {
+          "n": 15,
+          "median": 0.5345999999999549,
+          "min": 0.40850000000000364,
+          "max": 0.7325000000000728,
+          "present": 15,
+          "spans": 15
+        },
+        "bus.emit": {
+          "n": 15,
+          "median": 0.17149999999946886,
+          "min": 0.14319999999952415,
+          "max": 0.252100000000155,
+          "present": 15,
+          "spans": 30
+        },
+        "shell.spawn": {
+          "n": 15,
+          "median": 3.4749000000001615,
+          "min": 2.8019999999999072,
+          "max": 7.576900000000023,
+          "present": 15,
+          "spans": 15
+        },
+        "leaf": {
+          "n": 15,
+          "median": 166.5559000000003,
+          "min": 160.5553,
+          "max": 170.3445999999999,
+          "present": 15,
+          "spans": 15
+        },
+        "capture": {
+          "n": 15,
+          "median": 0.031499999999596184,
+          "min": 0.025199999999585998,
+          "max": 0.06899999999995998,
+          "present": 15,
+          "spans": 15
+        },
+        "hook.after": {
+          "n": 15,
+          "median": 0.004999999999654392,
+          "min": 0.003200000000106229,
+          "max": 0.008800000000064756,
+          "present": 15,
+          "spans": 15
+        },
+        "images": {
+          "n": 15,
+          "median": 0.013099999999667489,
+          "min": 0.009700000000066211,
+          "max": 0.02050000000053842,
+          "present": 15,
+          "spans": 15
+        }
+      },
+      "okCount": 15,
+      "totals": [
+        160.682,
+        166.325,
+        164.124,
+        163.53,
+        164.606,
+        166.607,
+        169.08,
+        166.825,
+        166.728,
+        170.347,
+        165.751,
+        169.378,
+        170.454,
+        167.129,
+        168.492
+      ]
+    },
+    "truncate": {
+      "n": 15,
+      "median": 0.6192000000000917,
+      "min": 0.4839000000001761,
+      "max": 3.3989000000001397
+    },
+    "history": {
+      "n": 15,
+      "median": 0.7669000000005326,
+      "min": 0.6422000000002299,
+      "max": 3.7938999999996668
+    },
+    "tollm": {
+      "n": 15,
+      "median": 0.14760000000023865,
+      "min": 0.13280000000031578,
+      "max": 0.20619999999962602
+    },
+    "durablePublish": {
+      "persist": {
+        "n": 15,
+        "median": 0.4283000000004904,
+        "min": 0.3407000000006519,
+        "max": 3.656600000000253
+      },
+      "emit": {
+        "n": 15,
+        "median": 0.051599999999780266,
+        "min": 0.04599999999936699,
+        "max": 0.08780000000024302
+      }
+    },
+    "diagOrder": [
+      {
+        "target": "read",
+        "totalMs": 2.27
+      },
+      {
+        "target": "shell",
+        "totalMs": 161.524
+      },
+      {
+        "target": "read",
+        "totalMs": 2.178
+      },
+      {
+        "target": "shell",
+        "totalMs": 168.499
+      },
+      {
+        "target": "read",
+        "totalMs": 1.981
+      },
+      {
+        "target": "shell",
+        "totalMs": 163.949
+      },
+      {
+        "target": "read",
+        "totalMs": 1.966
+      },
+      {
+        "target": "shell",
+        "totalMs": 166.368
+      }
+    ],
+    "diagGrouped": [
+      {
+        "target": "read",
+        "totalMs": 2.069
+      },
+      {
+        "target": "read",
+        "totalMs": 1.683
+      },
+      {
+        "target": "read",
+        "totalMs": 1.692
+      },
+      {
+        "target": "shell",
+        "totalMs": 169.587
+      },
+      {
+        "target": "shell",
+        "totalMs": 167.852
+      },
+      {
+        "target": "shell",
+        "totalMs": 163.763
+      }
+    ],
+    "messageCount": 40
+  }
+}

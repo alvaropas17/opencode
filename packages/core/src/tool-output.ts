@@ -12,6 +12,7 @@ import { State } from "./state.js"
 
 export const MAX_LINES = 2_000
 export const MAX_BYTES = 50 * 1024 // 50 KiB
+export const EXECUTE_LIMITS = { maxLines: 200, maxBytes: 8 * 1024 }
 export const RETENTION = Duration.days(7)
 export const DIRECTORY = "tool-output"
 
@@ -27,7 +28,7 @@ export type Editor = {
 }
 
 export interface Interface extends State.Transformable<Editor> {
-  readonly truncate: (result: Result) => Effect.Effect<Result>
+  readonly truncate: (result: Result, budget?: Partial<Limits>) => Effect.Effect<Result>
   readonly cleanup: () => Effect.Effect<void>
 }
 
@@ -62,11 +63,15 @@ const layer = Layer.effect(
       }),
     })
 
-    const truncate = Effect.fnUntraced(function* (result: Result) {
+    const truncate = Effect.fnUntraced(function* (result: Result, budget?: Partial<Limits>) {
       if (result.metadata?.truncated !== undefined) return result
       const content = result.content
       const text = content.flatMap((item) => (item.type === "text" ? [item.text] : [])).join("\n")
-      const limits = state.get()
+      const configured = state.get()
+      const limits = {
+        maxLines: Math.min(configured.maxLines, budget?.maxLines ?? configured.maxLines),
+        maxBytes: Math.min(configured.maxBytes, budget?.maxBytes ?? configured.maxBytes),
+      }
       const lines = text.split("\n")
       if (text.endsWith("\n")) lines.pop()
       const totalBytes = Buffer.byteLength(text, "utf-8")

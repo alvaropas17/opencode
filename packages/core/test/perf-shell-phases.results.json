@@ -1,0 +1,959 @@
+{
+  "generatedAt": "2026-10-01T12:53:14.479Z",
+  "platform": "win32",
+  "runtimes": {
+    "bun": "1.4.2"
+  },
+  "powerShell": "Windows PowerShell 5.1",
+  "repeats": 20,
+  "warmups": 3,
+  "notes": [
+    "Tool sub-phases use temporary probe marks in src/shell.ts and tool/plugin/shell.ts, reverted after the run; they are real boundary marks, not bus-event reception.",
+    "'spawnerApiReturn' is the Environment.spawner.spawn API return (handle), NOT process start; 'processExitCallback' is when the child exit callback runs; 'outputDrain' is when the output stream ends; 'capture' is shell.result reading the output file. Some of these can overlap (exit vs drain) and must not be summed blindly.",
+    "Bun.spawn and Environment.spawner marks are taken exactly in the harness (sync return, exitCode, stdout/stderr readers / stream drain).",
+    "Tool.Snapshot.execute shell always uses a shell interpreter (ShellSelect.args: '/c' or '-NoLogo -NoProfile -NonInteractive -Command'); there is no tool-level direct exec. 'shell->exe' is PowerShell invoking the exe.",
+    "tool.bash.* uses the Git Bash path (bash.exe -c) as the aligned default; compare against tool.ps.* (Windows PowerShell 5.1) and tool.cmd.* (cmd /c)."
+  ],
+  "output": {
+    "tool.ps.write-output-ok": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 173.15600000000018,
+        "min": 167.99019999999996,
+        "max": 177.9838000000002
+      },
+      "firstText": "ok\r\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        169.821,
+        173.807,
+        167.99,
+        173.156,
+        171.492,
+        177.984,
+        172.592,
+        173.518,
+        171.427,
+        172.606,
+        171.739,
+        173.879,
+        173.76,
+        172.524,
+        173.134,
+        171.579,
+        173.645,
+        174.146,
+        173.662,
+        174.155
+      ]
+    },
+    "tool.cmd.echo-ok": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 17.67749999999978,
+        "min": 16.21770000000015,
+        "max": 23.773200000000543
+      },
+      "firstText": "ok\r\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        18.804,
+        17.677,
+        17.661,
+        18.775,
+        16.218,
+        16.678,
+        16.973,
+        19.92,
+        17.063,
+        16.916,
+        18.188,
+        16.537,
+        17.129,
+        17.8,
+        18.092,
+        17.57,
+        16.889,
+        18.114,
+        23.773,
+        18.101
+      ]
+    },
+    "tool.bash.echo-ok": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 25.554000000000087,
+        "min": 24.60949999999957,
+        "max": 31.554000000000087
+      },
+      "firstText": "ok\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        31.554,
+        26.08,
+        26.669,
+        25.019,
+        26.119,
+        25.181,
+        24.907,
+        25.459,
+        25.497,
+        25.963,
+        25.202,
+        26.187,
+        25.743,
+        25.894,
+        25.157,
+        24.906,
+        24.965,
+        25.554,
+        24.609,
+        25.769
+      ]
+    },
+    "tool.ps.exe-via-shell": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 147.2447999999995,
+        "min": 141.73110000000088,
+        "max": 152.58750000000146
+      },
+      "firstText": "ok\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        148.836,
+        144.819,
+        142.622,
+        149.119,
+        150.474,
+        147.245,
+        143.384,
+        151.431,
+        142.973,
+        151.589,
+        145.748,
+        142.308,
+        147.321,
+        147.276,
+        143.686,
+        141.731,
+        149.904,
+        142.702,
+        142.526,
+        152.588
+      ]
+    },
+    "tool.ps.git-status": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 155.7451000000001,
+        "min": 150.01289999999972,
+        "max": 159.50370000000112
+      },
+      "firstText": "(no output)",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        156.322,
+        156.09,
+        155.745,
+        159.504,
+        152.764,
+        154.156,
+        158.778,
+        154.302,
+        154.808,
+        155.583,
+        150.013,
+        151.074,
+        156.029,
+        156.521,
+        157.603,
+        155.707,
+        156.742,
+        158.893,
+        154.689,
+        155.231
+      ]
+    },
+    "tool.cmd.git-status": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 30.835900000000038,
+        "min": 29.903599999999642,
+        "max": 33.51879999999983
+      },
+      "firstText": "(no output)",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        30.836,
+        30.047,
+        30.832,
+        29.904,
+        33.519,
+        31.426,
+        31.268,
+        31.83,
+        30.635,
+        30.381,
+        31.887,
+        31.405,
+        30.472,
+        30.897,
+        31.183,
+        30.454,
+        30.734,
+        31.815,
+        30.635,
+        30.558
+      ]
+    },
+    "tool.bash.git-status": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 39.9419999999991,
+        "min": 37.985899999999674,
+        "max": 47.29600000000028
+      },
+      "firstText": "(no output)",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        39.599,
+        37.986,
+        38.515,
+        47.296,
+        39.636,
+        39.984,
+        46.413,
+        38.869,
+        39.383,
+        41.555,
+        38.991,
+        39.434,
+        39.942,
+        44.944,
+        40.357,
+        38.798,
+        44.129,
+        43.02,
+        38.766,
+        40.188
+      ]
+    },
+    "tool.ps.rg-needle": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 151.166500000003,
+        "min": 145.46759999999995,
+        "max": 156.36189999999988
+      },
+      "firstText": "needle here\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        149.641,
+        153.017,
+        153.13,
+        145.468,
+        154.767,
+        153.715,
+        151.879,
+        147.952,
+        150.391,
+        148.133,
+        150.016,
+        146.743,
+        152.385,
+        146.353,
+        149.956,
+        154.433,
+        151.52,
+        151.167,
+        156.362,
+        146.93
+      ]
+    },
+    "tool.cmd.rg-needle": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 26.616799999999785,
+        "min": 25.905900000001566,
+        "max": 33.342899999999645
+      },
+      "firstText": "needle here\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        26.409,
+        26.287,
+        25.906,
+        25.95,
+        28.878,
+        26.987,
+        26.45,
+        26.855,
+        27.142,
+        26.244,
+        33.343,
+        28.492,
+        26.617,
+        27.594,
+        26.48,
+        26.09,
+        27.598,
+        26.301,
+        26.372,
+        27.137
+      ]
+    },
+    "tool.bash.rg-needle": {
+      "kind": "tool",
+      "validSamples": 0,
+      "invalidSamples": 20,
+      "offsetsFromStart": {},
+      "exclusiveComponents": {},
+      "total": {
+        "n": 20,
+        "median": 38.36449999999968,
+        "min": 35.68159999999989,
+        "max": 55.516999999999825
+      },
+      "firstText": "needle here\n",
+      "allOk": true,
+      "rawOffsets": [],
+      "samples": [
+        39.077,
+        35.941,
+        55.517,
+        36.773,
+        41.837,
+        46.69,
+        36.225,
+        38.748,
+        36.449,
+        36.749,
+        37.198,
+        38.707,
+        36.035,
+        38.782,
+        38.83,
+        38.364,
+        37.001,
+        36.545,
+        35.682,
+        43.581
+      ]
+    },
+    "bunspawn.exe": {
+      "kind": "bunspawn",
+      "syncReturn": {
+        "n": 20,
+        "median": 0.997800000001007,
+        "min": 0.9677999999985332,
+        "max": 1.1895000000004075
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 2.9759999999987485,
+        "min": 2.8861000000033528,
+        "max": 3.1422999999995227
+      },
+      "readersResolved": {
+        "n": 20,
+        "median": 2.9778999999980442,
+        "min": 2.8880000000026484,
+        "max": 3.144000000000233
+      },
+      "total": {
+        "n": 20,
+        "median": 2.9778999999980442,
+        "min": 2.8880000000026484,
+        "max": 3.144000000000233
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        3.136,
+        2.921,
+        2.981,
+        2.992,
+        2.911,
+        2.943,
+        2.958,
+        2.978,
+        2.924,
+        2.942,
+        2.988,
+        3.059,
+        3.029,
+        2.922,
+        3.015,
+        2.949,
+        3.144,
+        2.964,
+        2.888,
+        3.001
+      ],
+      "raw": [
+        {
+          "syncReturn": 1.016,
+          "exitResolved": 3.133,
+          "readersResolved": 3.136
+        },
+        {
+          "syncReturn": 0.973,
+          "exitResolved": 2.918,
+          "readersResolved": 2.921
+        },
+        {
+          "syncReturn": 1.001,
+          "exitResolved": 2.976,
+          "readersResolved": 2.981
+        },
+        {
+          "syncReturn": 1.01,
+          "exitResolved": 2.987,
+          "readersResolved": 2.992
+        },
+        {
+          "syncReturn": 0.988,
+          "exitResolved": 2.908,
+          "readersResolved": 2.911
+        }
+      ]
+    },
+    "bunspawn.cmd.echo-ok": {
+      "kind": "bunspawn",
+      "syncReturn": {
+        "n": 20,
+        "median": 1.305000000000291,
+        "min": 1.2150000000001455,
+        "max": 1.7303000000028987
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 7.938799999999901,
+        "min": 7.663300000000163,
+        "max": 8.917499999999563
+      },
+      "readersResolved": {
+        "n": 20,
+        "median": 7.941100000000006,
+        "min": 7.666199999999662,
+        "max": 8.920200000000477
+      },
+      "total": {
+        "n": 20,
+        "median": 7.941100000000006,
+        "min": 7.666199999999662,
+        "max": 8.920200000000477
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        8.087,
+        7.877,
+        7.666,
+        7.746,
+        8.559,
+        8.03,
+        8.362,
+        7.904,
+        8.92,
+        7.819,
+        7.981,
+        7.895,
+        7.725,
+        7.696,
+        7.941,
+        8.137,
+        7.792,
+        8.474,
+        7.984,
+        7.848
+      ],
+      "raw": [
+        {
+          "syncReturn": 1.305,
+          "exitResolved": 8.084,
+          "readersResolved": 8.087
+        },
+        {
+          "syncReturn": 1.305,
+          "exitResolved": 7.874,
+          "readersResolved": 7.877
+        },
+        {
+          "syncReturn": 1.215,
+          "exitResolved": 7.663,
+          "readersResolved": 7.666
+        },
+        {
+          "syncReturn": 1.315,
+          "exitResolved": 7.744,
+          "readersResolved": 7.746
+        },
+        {
+          "syncReturn": 1.27,
+          "exitResolved": 8.556,
+          "readersResolved": 8.559
+        }
+      ]
+    },
+    "bunspawn.git-status": {
+      "kind": "bunspawn",
+      "syncReturn": {
+        "n": 20,
+        "median": 1.221799999999348,
+        "min": 1.1290999999982887,
+        "max": 1.3555000000014843
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 11.793900000000576,
+        "min": 11.487600000000384,
+        "max": 12.308199999999488
+      },
+      "readersResolved": {
+        "n": 20,
+        "median": 11.797200000000885,
+        "min": 11.490300000001298,
+        "max": 12.310600000000704
+      },
+      "total": {
+        "n": 20,
+        "median": 11.797200000000885,
+        "min": 11.490300000001298,
+        "max": 12.310600000000704
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        11.602,
+        11.797,
+        12.174,
+        11.831,
+        11.603,
+        11.621,
+        11.908,
+        11.793,
+        11.839,
+        12.114,
+        12.311,
+        11.895,
+        11.49,
+        11.536,
+        11.819,
+        11.705,
+        11.631,
+        11.597,
+        12.065,
+        11.765
+      ],
+      "raw": [
+        {
+          "syncReturn": 1.198,
+          "exitResolved": 11.599,
+          "readersResolved": 11.602
+        },
+        {
+          "syncReturn": 1.273,
+          "exitResolved": 11.794,
+          "readersResolved": 11.797
+        },
+        {
+          "syncReturn": 1.356,
+          "exitResolved": 12.171,
+          "readersResolved": 12.174
+        },
+        {
+          "syncReturn": 1.19,
+          "exitResolved": 11.828,
+          "readersResolved": 11.831
+        },
+        {
+          "syncReturn": 1.2,
+          "exitResolved": 11.6,
+          "readersResolved": 11.603
+        }
+      ]
+    },
+    "bunspawn.rg-needle": {
+      "kind": "bunspawn",
+      "syncReturn": {
+        "n": 20,
+        "median": 2.6951000000008207,
+        "min": 2.624599999999191,
+        "max": 8.940099999999802
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 6.37159999999858,
+        "min": 6.198400000001129,
+        "max": 9.105400000000373
+      },
+      "readersResolved": {
+        "n": 20,
+        "median": 6.373099999997066,
+        "min": 6.200100000001839,
+        "max": 9.146500000002561
+      },
+      "total": {
+        "n": 20,
+        "median": 6.373099999997066,
+        "min": 6.200100000001839,
+        "max": 9.146500000002561
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        6.565,
+        6.371,
+        6.519,
+        6.373,
+        6.214,
+        7.154,
+        9.147,
+        7.119,
+        6.505,
+        6.575,
+        6.378,
+        6.248,
+        6.295,
+        6.213,
+        6.284,
+        6.394,
+        6.29,
+        6.341,
+        6.2,
+        6.353
+      ],
+      "raw": [
+        {
+          "syncReturn": 2.931,
+          "exitResolved": 6.564,
+          "readersResolved": 6.565
+        },
+        {
+          "syncReturn": 2.76,
+          "exitResolved": 6.369,
+          "readersResolved": 6.371
+        },
+        {
+          "syncReturn": 2.684,
+          "exitResolved": 6.518,
+          "readersResolved": 6.519
+        },
+        {
+          "syncReturn": 2.763,
+          "exitResolved": 6.372,
+          "readersResolved": 6.373
+        },
+        {
+          "syncReturn": 2.689,
+          "exitResolved": 6.212,
+          "readersResolved": 6.214
+        }
+      ]
+    },
+    "spawner.exe": {
+      "kind": "spawner",
+      "handleReturn": {
+        "n": 20,
+        "median": 1.6400999999968917,
+        "min": 1.5552000000025146,
+        "max": 1.7783000000017637
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 10.853699999999662,
+        "min": 9.841599999999744,
+        "max": 16.445999999999913
+      },
+      "drainResolved": {
+        "n": 20,
+        "median": 10.751099999997678,
+        "min": 9.765599999998813,
+        "max": 16.39379999999801
+      },
+      "total": {
+        "n": 20,
+        "median": 10.901099999999133,
+        "min": 9.889599999998609,
+        "max": 16.48619999999937
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        10.964,
+        10.447,
+        10.047,
+        11.189,
+        10.072,
+        9.89,
+        11.293,
+        10.059,
+        10.904,
+        16.486,
+        11.37,
+        11.177,
+        10.143,
+        12.488,
+        11.404,
+        9.966,
+        10.467,
+        10.482,
+        10.847,
+        10.901
+      ],
+      "raw": [
+        {
+          "handleReturn": 1.677,
+          "exitResolved": 10.912,
+          "drainResolved": 10.807
+        },
+        {
+          "handleReturn": 1.778,
+          "exitResolved": 10.395,
+          "drainResolved": 10.281
+        },
+        {
+          "handleReturn": 1.629,
+          "exitResolved": 9.991,
+          "drainResolved": 9.899
+        },
+        {
+          "handleReturn": 1.616,
+          "exitResolved": 11.149,
+          "drainResolved": 11.086
+        },
+        {
+          "handleReturn": 1.665,
+          "exitResolved": 10.028,
+          "drainResolved": 9.945
+        }
+      ]
+    },
+    "spawner.git-status": {
+      "kind": "spawner",
+      "handleReturn": {
+        "n": 20,
+        "median": 1.981900000002497,
+        "min": 1.8629999999975553,
+        "max": 2.1512000000002445
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 19.7583999999988,
+        "min": 18.64849999999933,
+        "max": 24.901499999999942
+      },
+      "drainResolved": {
+        "n": 20,
+        "median": 19.336999999999534,
+        "min": 18.236799999998766,
+        "max": 24.450700000001234
+      },
+      "total": {
+        "n": 20,
+        "median": 19.825799999998708,
+        "min": 18.698300000000017,
+        "max": 24.95100000000093
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        19.879,
+        24.228,
+        21.105,
+        19.001,
+        19.017,
+        19.061,
+        20.739,
+        19.826,
+        20.113,
+        18.953,
+        20.437,
+        19.192,
+        20.212,
+        24.951,
+        18.698,
+        18.874,
+        19.289,
+        20.529,
+        19.736,
+        19.512
+      ],
+      "raw": [
+        {
+          "handleReturn": 1.987,
+          "exitResolved": 19.818,
+          "drainResolved": 19.41
+        },
+        {
+          "handleReturn": 2.032,
+          "exitResolved": 24.179,
+          "drainResolved": 24
+        },
+        {
+          "handleReturn": 1.982,
+          "exitResolved": 21.045,
+          "drainResolved": 20.578
+        },
+        {
+          "handleReturn": 1.887,
+          "exitResolved": 18.941,
+          "drainResolved": 18.53
+        },
+        {
+          "handleReturn": 1.945,
+          "exitResolved": 18.965,
+          "drainResolved": 18.588
+        }
+      ]
+    },
+    "spawner.rg-needle": {
+      "kind": "spawner",
+      "handleReturn": {
+        "n": 20,
+        "median": 11.904999999998836,
+        "min": 11.394599999999627,
+        "max": 12.361499999999069
+      },
+      "exitResolved": {
+        "n": 20,
+        "median": 22.98660000000018,
+        "min": 21.95839999999953,
+        "max": 28.822199999998702
+      },
+      "drainResolved": {
+        "n": 20,
+        "median": 22.77230000000054,
+        "min": 21.6987999999983,
+        "max": 28.569400000000314
+      },
+      "total": {
+        "n": 20,
+        "median": 23.052999999999884,
+        "min": 22.006900000000314,
+        "max": 28.871899999998277
+      },
+      "exits": [
+        0
+      ],
+      "allOk": true,
+      "samples": [
+        22.7,
+        26.313,
+        24.814,
+        28.288,
+        22.643,
+        22.637,
+        23.196,
+        23.1,
+        28.872,
+        23.304,
+        22.984,
+        23.053,
+        24.185,
+        22.007,
+        22.659,
+        23.216,
+        22.134,
+        22.971,
+        22.65,
+        22.572
+      ],
+      "raw": [
+        {
+          "handleReturn": 11.703,
+          "exitResolved": 22.659,
+          "drainResolved": 22.437
+        },
+        {
+          "handleReturn": 11.974,
+          "exitResolved": 26.226,
+          "drainResolved": 26.102
+        },
+        {
+          "handleReturn": 12.361,
+          "exitResolved": 24.761,
+          "drainResolved": 24.483
+        },
+        {
+          "handleReturn": 12.073,
+          "exitResolved": 28.238,
+          "drainResolved": 28.026
+        },
+        {
+          "handleReturn": 12.078,
+          "exitResolved": 22.581,
+          "drainResolved": 22.229
+        }
+      ]
+    }
+  }
+}

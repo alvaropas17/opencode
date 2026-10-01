@@ -32,6 +32,41 @@ const withStore = <A, E, R>(
   )
 
 describe("ToolOutput", () => {
+  it.live("bounds execute previews while preserving full output and other tools' budget", () =>
+    withStore((service, fs) =>
+      Effect.gen(function* () {
+        const text = Array.from({ length: 300 }, (_, i) => `evidencia ${i}: ${"á".repeat(30)}`).join("\n")
+        const result = { content: [{ type: "text" as const, text }], metadata: { toolCalls: [] } }
+        const compact = yield* service.truncate(result, ToolOutput.EXECUTE_LIMITS)
+        expect(compact.metadata).toMatchObject({ truncated: true, toolCalls: [] })
+        const file = compact.metadata?.outputPath
+        expect(typeof file).toBe("string")
+        if (typeof file !== "string") return
+        expect(yield* fs.readFileString(file)).toBe(text)
+        const preview = compact.content.filter((item) => item.type === "text").map((item) => item.text)
+        expect(Buffer.byteLength(preview[0], "utf8")).toBeLessThanOrEqual(8 * 1024)
+        expect(preview[0].split("\n").length).toBeLessThanOrEqual(200)
+        expect(preview[1]).toContain(file)
+        expect((yield* service.truncate(result)).content).toEqual(result.content)
+      }),
+    ),
+  )
+
+  it.live("keeps stricter configured limits when an execute budget is supplied", () =>
+    withStore(
+      (service) =>
+        Effect.gen(function* () {
+          const result = yield* service.truncate(
+            { content: [{ type: "text", text: "one\ntwo\nthree" }] },
+            ToolOutput.EXECUTE_LIMITS,
+          )
+          expect(result.content[0]).toEqual({ type: "text", text: "one\ntwo" })
+          expect(result.metadata?.truncated).toBe(true)
+        }),
+      { maxLines: 2, maxBytes: 1_000 },
+    ),
+  )
+
   it.live("writes oversized text and returns a bounded preview", () =>
     withStore(
       (service, fs) =>
